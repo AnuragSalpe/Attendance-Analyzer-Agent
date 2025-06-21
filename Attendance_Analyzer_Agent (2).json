@@ -1,0 +1,207 @@
+{
+  "name": "Attendance Analyzer Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "45 18 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -20,
+        -20
+      ],
+      "id": "579c143d-ab06-4a30-8aa5-c3758b917bfb",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1vTz5ficmBuNF4nER0iZjOITjV4v2_xDJSc9qqUIZOI8",
+          "mode": "list",
+          "cachedResultName": "Students Raw Attendence Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vTz5ficmBuNF4nER0iZjOITjV4v2_xDJSc9qqUIZOI8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 448847073,
+          "mode": "list",
+          "cachedResultName": "summary",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vTz5ficmBuNF4nER0iZjOITjV4v2_xDJSc9qqUIZOI8/edit#gid=448847073"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{$json.date}}",
+            "Status": "={{$json.status}}",
+            "Name": "={{$json.name}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Remarks",
+              "displayName": "Remarks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        760,
+        -20
+      ],
+      "id": "8924c1bd-c5c5-415f-8dc6-c8b3daac6bc9",
+      "name": "Google Sheets1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YtUWKUeSWsetfTBX",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1vTz5ficmBuNF4nER0iZjOITjV4v2_xDJSc9qqUIZOI8",
+          "mode": "list",
+          "cachedResultName": "Students Raw Attendence Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vTz5ficmBuNF4nER0iZjOITjV4v2_xDJSc9qqUIZOI8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vTz5ficmBuNF4nER0iZjOITjV4v2_xDJSc9qqUIZOI8/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        180,
+        -20
+      ],
+      "id": "f4c56118-7029-4325-9e0f-b6575338212e",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YtUWKUeSWsetfTBX",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const data = item.json;\n\n  const name = data.name || data.Name || \"\";\n  const date = data.date || data.Date || \"\";\n  const time = data[\"clock in time\"] || data[\"Clock In Time\"] || data.time || \"\";\n\n  let status = \"\";\n\n  if (!time || time.trim() === \"\") {\n    status = \"Absent\";\n  } else {\n    const timeMatch = time.match(/(\\d{1,2}):(\\d{2})\\s*(am|pm)?/i);\n    if (!timeMatch) {\n      status = \"Absent\";\n    } else {\n      let hour = parseInt(timeMatch[1], 10);\n      const min = parseInt(timeMatch[2], 10);\n      const meridian = timeMatch[3]?.toLowerCase();\n\n      if (meridian === \"pm\" && hour !== 12) hour += 12;\n      if (meridian === \"am\" && hour === 12) hour = 0;\n\n      const totalMinutes = hour * 60 + min;\n\n      status = totalMinutes <= 570 ? \"Present\" : \"Late\";\n    }\n  }\n\n  return {\n    json: {\n      name,\n      date,\n      status\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        60
+      ],
+      "id": "2c6343c4-add3-4e4a-9b2f-73cf110f71cd",
+      "name": "Code"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets1": {
+      "main": [
+        []
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "653bff48-6ec5-4572-ac97-f3ab2ad8283a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "978847ad574086a8768f361d64152aff45c84c6c9c4f3f3a5362df5e49af60c8"
+  },
+  "id": "BEbNqihbYPZpvViV",
+  "tags": []
+}
